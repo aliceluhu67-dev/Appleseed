@@ -1,7 +1,46 @@
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const repoRoot = path.resolve(
+	fileURLToPath(new URL("../..", import.meta.url))
+);
+
+function serveAetherUi() {
+	return {
+		name: "serve-aether-ui",
+		configureServer(server) {
+			server.middlewares.use(async (req, res, next) => {
+				const url = new URL(req.url ?? "/", "http://localhost");
+				const pathname =
+					url.pathname === "/" ? "/learningdashboard.html" : url.pathname;
+
+				if (
+					pathname !== "/activities.html" &&
+					pathname !== "/learning.html" &&
+					pathname !== "/learningtools.html" &&
+					pathname !== "/learningdashboard.html"
+				) {
+					next();
+					return;
+				}
+
+				const htmlPath = path.join(repoRoot, pathname.slice(1));
+				const html = await fs.readFile(htmlPath, "utf-8");
+				const transformed = await server.transformIndexHtml(pathname, html);
+
+				res.statusCode = 200;
+				res.setHeader("Content-Type", "text/html; charset=utf-8");
+				res.end(transformed);
+			});
+		},
+	};
+}
 
 export default {
 	plugins: [
+		serveAetherUi(),
 		viteStaticCopy({
 			structured: false,
 			targets: [
