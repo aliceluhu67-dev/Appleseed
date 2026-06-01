@@ -10,7 +10,7 @@ import {
 
 let controllerPromise: Promise<Controller> | null = null;
 const cachePlugin = new HttpCachePlugin();
-const transportPreferenceKey = "aether-scramjet-transport";
+const transportPreferenceKey = "aether-study-transport";
 
 async function waitForControllerOrReady(timeoutMs = 10000): Promise<void> {
 	if (navigator.serviceWorker.controller) return;
@@ -53,6 +53,10 @@ async function getController(): Promise<Controller> {
 		const controller = new Controller({
 			serviceworker,
 			transport,
+			config: {
+				scramjetPath: "/study-assets/scramjet.js",
+				wasmPath: "/study-assets/scramjet.wasm",
+			},
 			scramjetConfig: defaultConfigDev,
 		});
 		await controller.wait();

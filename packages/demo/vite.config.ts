@@ -46,7 +46,7 @@ export default {
 			targets: [
 				{
 					src: "node_modules/@mercuryworkshop/scramjet/dist/*",
-					dest: "scramjet",
+					dest: "study-assets",
 				},
 				{
 					src: "node_modules/@mercuryworkshop/scramjet-controller/dist/*",

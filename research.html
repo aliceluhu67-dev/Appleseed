@@ -6,7 +6,7 @@
 
     <title>AETHER</title>
 
-    <script src="/scramjet/scramjet.js"></script>
+    <script src="/study-assets/scramjet.js"></script>
     <script src="/controller/controller.api.js"></script>
 
     <style>
@@ -721,7 +721,7 @@ function initAetherProxy() {
     createTab();
 
     function getFrame(tab) {
-        tab.framePromise ??= import("/src/aether-scramjet.ts").then(({ createAetherFrame }) => createAetherFrame(tab.iframeEl, (url) => {
+        tab.framePromise ??= import("/src/aether-research.ts").then(({ createAetherFrame }) => createAetherFrame(tab.iframeEl, (url) => {
             const active = getActiveTab();
             if (active?.id === tab.id) {
                 address.value = url;
