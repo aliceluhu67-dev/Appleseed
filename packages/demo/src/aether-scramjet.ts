@@ -69,7 +69,7 @@ export async function createAetherFrame(
 	const controller = await getController();
 	const urlWatcher = new UrlWatcherPlugin((url) => onUrlChange?.(url));
 	const catchEscapedLinks = new CatchEscapedLinksPlugin(
-		(url) => new URL(`/learning.html?goto=${encodeURIComponent(url.href)}`, location.origin)
+		(url) => new URL(`/research.html?goto=${encodeURIComponent(url.href)}`, location.origin)
 	);
 
 	return controller.createFrame(iframe, {

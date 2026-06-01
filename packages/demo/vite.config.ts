@@ -14,13 +14,13 @@ function serveAetherUi() {
 			server.middlewares.use(async (req, res, next) => {
 				const url = new URL(req.url ?? "/", "http://localhost");
 				const pathname =
-					url.pathname === "/" ? "/learningdashboard.html" : url.pathname;
+					url.pathname === "/" ? "/studyhub.html" : url.pathname;
 
 				if (
-					pathname !== "/activities.html" &&
-					pathname !== "/learning.html" &&
-					pathname !== "/learningtools.html" &&
-					pathname !== "/learningdashboard.html"
+					pathname !== "/enrichment.html" &&
+					pathname !== "/research.html" &&
+					pathname !== "/resources.html" &&
+					pathname !== "/studyhub.html"
 				) {
 					next();
 					return;

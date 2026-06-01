@@ -1,10 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learning Tools</title>
-
     <style>
         html, body {
             margin: 0;
@@ -13,81 +9,33 @@
             height: 100%;
             overflow: hidden;
             background-color: #121212;
-            color: white;
-            font-family: "Courier New", Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
 
-        .appleseed {
-            position: absolute;
-            top: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #1a1a1a;
+        .button-wrapper {
+            display: flex;
+            gap: 40px;
+            margin-top: 40px;
+            z-index: 10;
+        }
+
+        .Medeviscool, .VenomOnTop, .deveriono {
+            background-color: black;
+            border-color: #ffffff; 
             border-radius: 20px;
-            padding: 10px 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 4px solid #ffffff;
-            z-index: 50;
-            min-width: 320px;
-            gap: 22px;
-        }
-
-        .homebutton {
-            background: transparent;
-            border: none;
+            padding: 20px 30px;
+            border-width: 5px;
+            border-style: solid;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 18px;
             cursor: pointer;
-            outline: none;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.2s ease, opacity 0.2s ease;
-        }
-
-        .homebutton:hover {
-            transform: scale(1.15);
-            opacity: 0.8;
-        }
-
-        .home-icon {
-            position: relative;
-            display: block;
-            width: 38px;
-            height: 34px;
-        }
-
-        .home-icon::before {
-            content: "";
-            position: absolute;
-            left: 4px;
-            top: 12px;
-            width: 30px;
-            height: 22px;
-            background: #ffffff;
-            clip-path: polygon(0 0, 50% 0, 100% 0, 100% 100%, 63% 100%, 63% 54%, 37% 54%, 37% 100%, 0 100%);
-        }
-
-        .home-icon::after {
-            content: "";
-            position: absolute;
-            left: 2px;
-            top: 0;
-            width: 34px;
-            height: 28px;
-            background: #ffffff;
-            clip-path: polygon(50% 0, 100% 58%, 90% 68%, 50% 24%, 10% 68%, 0 58%);
-        }
-
-        .home-chimney {
-            position: absolute;
-            right: 5px;
-            top: 3px;
-            width: 8px;
-            height: 15px;
-            background: #ffffff;
-            border-radius: 2px 2px 0 0;
+            transition: all 1s ease;
+            text-decoration: none; 
+            display: inline-block;
         }
 
         .nav-action {
@@ -113,6 +61,11 @@
             width: 58px;
             height: 42px;
             display: block;
+        }
+
+        .Medeviscool:hover, .VenomOnTop:hover, .deveriono:hover {
+            transform: scale(1.1);
+            background-color: #222; 
         }
 
         .controller-icon {
@@ -203,7 +156,7 @@
 
         .controller-dot.two {
             right: 7px;
-            top: 12px;
+            top: 11px;
             width: 4px;
             height: 4px;
         }
@@ -315,50 +268,93 @@
             height: 14px;
         }
 
-        .tools-shell {
+        .appleseed {
             position: absolute;
-            inset: 0;
-            z-index: 10;
-            box-sizing: border-box;
+            top: 15px; 
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1a1a1a;
+            border-radius: 20px;
+            padding: 10px 40px;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 34px;
-            padding: 100px 28px 28px;
+            border: 4px solid #ffffff; 
+            z-index: 50;
+            min-width: 320px;
+            gap: 22px;
         }
 
-        .tools-title {
-            margin: 0;
-            color: #ffffff;
-            font-size: 90px;
-            line-height: 1;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-            user-select: none;
-        }
-
-        .tool-tabs {
-            width: min(960px, 92vw);
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 18px;
-        }
-
-        .tool-tab {
-            background-color: black;
-            border: 5px solid #ffffff;
-            border-radius: 20px;
-            padding: 20px 18px;
-            color: white;
-            font-family: inherit;
-            font-size: 18px;
+        .homebutton {
+            background: transparent;
+            border: none;
             cursor: pointer;
-            transition: all 0.2s ease;
+            outline: none;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease, opacity 0.2s ease;
         }
 
-        .tool-tab:hover {
-            transform: scale(1.06);
-            background-color: #222;
+        .homebutton:hover {
+            transform: scale(1.15);
+            opacity: 0.8;
+        }
+
+        .home-icon {
+            position: relative;
+            display: block;
+            width: 38px;
+            height: 34px;
+        }
+
+        .home-icon::before {
+            content: "";
+            position: absolute;
+            left: 4px;
+            top: 12px;
+            width: 30px;
+            height: 22px;
+            background: #ffffff;
+            clip-path: polygon(0 0, 50% 0, 100% 0, 100% 100%, 63% 100%, 63% 54%, 37% 54%, 37% 100%, 0 100%);
+        }
+
+        .home-icon::after {
+            content: "";
+            position: absolute;
+            left: 2px;
+            top: 0;
+            width: 34px;
+            height: 28px;
+            background: #ffffff;
+            clip-path: polygon(50% 0, 100% 58%, 90% 68%, 50% 24%, 10% 68%, 0 58%);
+        }
+
+        .home-chimney {
+            position: absolute;
+            right: 5px;
+            top: 3px;
+            width: 8px;
+            height: 15px;
+            background: #ffffff;
+            border-radius: 2px 2px 0 0;
+        }
+
+        .Aetherlogo {
+            transition: all 0.9s ease;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8); 
+            color: #ffffff; 
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 150px;
+            margin: 0;
+            z-index: 10;
+        }
+
+        .Aetherlogo:hover {
+            transform: scale(1.1);
+            color: #ffffff;
+            text-shadow: 0 0 40px rgba(255, 255, 255, 0.9);
         }
 
         .bubble-container {
@@ -398,26 +394,12 @@
                 opacity: 0;
             }
         }
-
-        @media (max-width: 720px) {
-            .tools-shell {
-                justify-content: flex-start;
-                padding: 105px 18px 18px;
-            }
-
-            .tools-title {
-                font-size: 48px;
-            }
-
-            .tool-tabs {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
     </style>
 </head>
 <body>
+
     <nav class="appleseed">
-        <button class="nav-action" onclick="window.location.href='activities.html'" title="Games" aria-label="Games">
+        <button class="nav-action" onclick="window.location.href='enrichment.html'" title="Games" aria-label="Games">
             <svg class="controller-svg" aria-hidden="true" viewBox="0 0 96 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M24 20C17 22 13 33 9 49C8 55 18 58 22 51L30 37H66L74 51C78 58 88 55 87 49C83 33 79 22 72 20C62 17 34 17 24 20Z" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
                 <circle cx="31" cy="30" r="5" fill="white"/>
@@ -427,10 +409,10 @@
                 <path d="M44 27H49M57 27H62" stroke="white" stroke-width="5" stroke-linecap="round"/>
             </svg>
         </button>
-        <button class="homebutton" onclick="window.location.href='learningdashboard.html'" title="Home">
+        <button class="homebutton" onclick="window.location.href='studyhub.html'" title="Home">
             <span class="home-icon" aria-hidden="true"><span class="home-chimney"></span></span>
         </button>
-        <button class="nav-action" onclick="window.location.href='learningtools.html'" title="Apps" aria-label="Apps">
+        <button class="nav-action" onclick="window.location.href='resources.html'" title="Apps" aria-label="Apps">
             <span class="apps-icon" aria-hidden="true">
                 <span class="apps-square one"></span>
                 <span class="apps-square two"></span>
@@ -440,17 +422,13 @@
         </button>
     </nav>
 
-    <main class="tools-shell">
-        <h1 class="tools-title">TOOLS</h1>
-        <div class="tool-tabs">
-            <button class="tool-tab" data-url="https://flixmomo.com">movies</button>
-            <button class="tool-tab" data-url="https://youtube.com">youtube</button>
-            <button class="tool-tab" data-url="https://tiktok.com">tiktok</button>
-            <button class="tool-tab" data-url="https://discord.com">discord</button>
-            <button class="tool-tab" data-url="https://instagram.com">instagram</button>
-            <button class="tool-tab" data-url="https://facebook.com">facebook</button>
-        </div>
-    </main>
+    <h1 class="Aetherlogo">AETHER</h1>
+    
+    <div class="button-wrapper">
+        <button class="Medeviscool" onclick="window.location.href='enrichment.html'">games</button>
+        <button class="VenomOnTop" onclick="window.location.href='resources.html'">apps</button>
+        <button class="deveriono" onclick="window.location.href='research.html'">proxy</button>
+    </div>
 
     <div class="bubble-container">
         <div class="bubble" style="--start-x: 5%;  --drift-x: 40px;  --size: 14px; --speed: 9s;  --delay: 0s;   --max-opacity: 0.6; --color: #00b4d8;"></div>
@@ -465,13 +443,10 @@
         <div class="bubble" style="--start-x: 93%; --drift-x: -40px; --size: 13px; --speed: 8s;  --delay: 1.8s; --max-opacity: 0.6; --color: #00b4d8;"></div>
     </div>
 
-    <script>
-        document.querySelectorAll(".tool-tab").forEach((button) => {
-            button.addEventListener("click", () => {
-                const url = button.dataset.url;
-                window.location.href = `learning.html?goto=${encodeURIComponent(url)}`;
-            });
-        });
-    </script>
+    <script src="uv/uv.bundle.js" defer></script>
+    <script src="uv/uv.config.js" defer></script>
+    <script src="register-sw.js" defer></script>
+    <script src="search.js" defer></script>
+
 </body>
 </html>
