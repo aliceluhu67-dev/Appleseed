@@ -47,6 +47,23 @@ export default {
 				{
 					src: "node_modules/@mercuryworkshop/scramjet/dist/*",
 					dest: "study-assets",
+					rename: (name, extension) => {
+						const filename = `${name}.${extension}`;
+						const names = {
+							"scramjet.js": "research-engine.js",
+							"scramjet.js.map": "research-engine.js.map",
+							"scramjet.mjs": "research-engine.mjs",
+							"scramjet.mjs.map": "research-engine.mjs.map",
+							"scramjet.wasm": "research-engine.wasm",
+							"scramjet-external.mjs": "research-engine-external.mjs",
+							"scramjet_bundled.js": "research-engine-bundled.js",
+							"scramjet_bundled.js.map": "research-engine-bundled.js.map",
+							"scramjet_bundled.mjs": "research-engine-bundled.mjs",
+							"scramjet_bundled.mjs.map": "research-engine-bundled.mjs.map",
+						};
+
+						return names[filename] ?? filename;
+					},
 				},
 				{
 					src: "node_modules/@mercuryworkshop/scramjet-controller/dist/*",

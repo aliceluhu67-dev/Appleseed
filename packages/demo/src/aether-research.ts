@@ -54,8 +54,9 @@ async function getController(): Promise<Controller> {
 			serviceworker,
 			transport,
 			config: {
-				scramjetPath: "/study-assets/scramjet.js",
-				wasmPath: "/study-assets/scramjet.wasm",
+				scramjetPath: "/study-assets/research-engine.js",
+				wasmPath: "/study-assets/research-engine.wasm",
+				virtualWasmPath: "research-engine.wasm.js",
 			},
 			scramjetConfig: defaultConfigDev,
 		});

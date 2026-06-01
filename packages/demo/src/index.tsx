@@ -97,8 +97,9 @@ async function init() {
 			serviceworker: readySw,
 			transport: getTransport(),
 			config: {
-				scramjetPath: "/study-assets/scramjet.js",
-				wasmPath: "/study-assets/scramjet.wasm",
+				scramjetPath: "/study-assets/research-engine.js",
+				wasmPath: "/study-assets/research-engine.wasm",
+				virtualWasmPath: "research-engine.wasm.js",
 			},
 			scramjetConfig: defaultConfigDev,
 		});
