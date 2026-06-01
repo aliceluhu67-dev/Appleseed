@@ -29,36 +29,51 @@ const branch = execSync("git rev-parse --abbrev-ref HEAD", {
 const packagejson = JSON.parse(await fs.readFile("./package.json", "utf-8"));
 const version = packagejson.version;
 
-const DEMO_PORT = process.env.DEMO_PORT || 4141;
+const SINGLE_PORT = !!process.env.RENDER || process.env.SINGLE_PORT === "true";
+const DEMO_PORT = process.env.PORT || process.env.DEMO_PORT || 4141;
 const WISP_PORT = process.env.WISP_PORT || 4142;
 
 if (process.env.VITE_WISP_URL) {
 	process.env.VITE_WISP_URL = normalizeWebsocketUrl(process.env.VITE_WISP_URL);
+} else if (process.env.RENDER_EXTERNAL_HOSTNAME) {
+	process.env.VITE_WISP_URL = `wss://${process.env.RENDER_EXTERNAL_HOSTNAME}/`;
+} else if (SINGLE_PORT) {
+	process.env.VITE_WISP_URL = `ws://localhost:${DEMO_PORT}/`;
 } else {
 	process.env.VITE_WISP_URL = `ws://localhost:${WISP_PORT}/`;
 }
 
-const wispserver = http.createServer((req, res) => {
-	res.writeHead(200, { "Content-Type": "text/plain" });
-	res.end("wisp server js rewrite");
-});
 wisp.options.allow_private_ips = true;
 wisp.options.allow_loopback_ips = true;
 
-wispserver.on("upgrade", (req, socket, head) => {
-	wisp.routeRequest(req, socket, head);
-});
+if (!SINGLE_PORT) {
+	const wispserver = http.createServer((req, res) => {
+		res.writeHead(200, { "Content-Type": "text/plain" });
+		res.end("wisp server js rewrite");
+	});
 
-wispserver.listen(Number(WISP_PORT));
+	wispserver.on("upgrade", (req, socket, head) => {
+		wisp.routeRequest(req, socket, head);
+	});
+
+	wispserver.listen(Number(WISP_PORT));
+}
 
 const server = await createServer({
 	configFile: "./packages/demo/vite.config.ts",
 	root: "./packages/demo",
 	server: {
 		port: Number(DEMO_PORT),
+		host: "0.0.0.0",
 		strictPort: true,
 	},
 });
+
+if (SINGLE_PORT) {
+	server.httpServer?.on("upgrade", (req, socket, head) => {
+		wisp.routeRequest(req, socket, head);
+	});
+}
 
 warnOnUrlEscape(server);
 
