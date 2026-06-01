@@ -394,7 +394,7 @@
             z-index: 10;
         }
 
-        .proxy-logo {
+        .research-logo {
             font-size: 90px;
             color: white;
             margin-bottom: 30px;
@@ -516,7 +516,7 @@
 
         <div class="search-container" id="landing-ui">
 
-            <h1 class="proxy-logo">AETHER</h1>
+            <h1 class="research-logo">AETHER</h1>
 
             <form id="uv-form" onsubmit="return false">
                 <input
@@ -588,7 +588,7 @@
 
  
 <script type="module">
-function initAetherProxy() {
+function initAetherResearch() {
 
     const form = document.getElementById("uv-form");
     const address = document.getElementById("uv-address");
@@ -732,7 +732,7 @@ function initAetherProxy() {
     }
 
     /* =========================
-        SCRAMJET FIX (FINAL WORKING FORM)
+        AETHER RESEARCH ENGINE SETUP
     ========================= */
     async function loadAddress() {
 
@@ -788,9 +788,9 @@ function initAetherProxy() {
 }
 
 if (document.readyState === "loading") {
-    window.addEventListener("DOMContentLoaded", initAetherProxy);
+    window.addEventListener("DOMContentLoaded", initAetherResearch);
 } else {
-    initAetherProxy();
+    initAetherResearch();
 }
 </script>
 

@@ -40,7 +40,7 @@ async function getController(): Promise<Controller> {
 		const serviceworker =
 			navigator.serviceWorker.controller ?? registration.active;
 		if (!serviceworker) {
-			throw new Error("Scramjet service worker is not available");
+			throw new Error("AETHER research service worker is not available");
 		}
 
 		const wisp =

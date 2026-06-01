@@ -49,7 +49,7 @@ wisp.options.allow_loopback_ips = true;
 if (!SINGLE_PORT) {
 	const wispserver = http.createServer((req, res) => {
 		res.writeHead(200, { "Content-Type": "text/plain" });
-		res.end("wisp server js rewrite");
+		res.end("study relay server");
 	});
 
 	wispserver.on("upgrade", (req, socket, head) => {
@@ -93,7 +93,7 @@ const lines = [
 		)}`
 	),
 	black()(
-		`${accent("wisp")} ${connector} ${urlColor(
+		`${accent("relay")} ${connector} ${urlColor(
 			process.env.VITE_WISP_URL ?? ""
 		)}`
 	),
