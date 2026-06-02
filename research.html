@@ -592,6 +592,7 @@
 <script type="module">
 function initAetherResearch() {
 
+    const toolTargetKey = "aether-tool-target";
     const form = document.getElementById("uv-form");
     const address = document.getElementById("uv-address");
     const landingUi = document.getElementById("landing-ui");
@@ -674,6 +675,8 @@ function initAetherResearch() {
         const iframeEl = document.createElement("iframe");
         iframeEl.className = "web-viewport";
         iframeEl.style.display = "none";
+        iframeEl.setAttribute("allow", "autoplay; fullscreen; pointer-lock; gamepad; microphone; camera; clipboard-read; clipboard-write");
+        iframeEl.setAttribute("allowfullscreen", "");
 
         viewportsContainer.appendChild(iframeEl);
         tabBar.insertBefore(tabEl, newTabBtn);
@@ -725,6 +728,61 @@ function initAetherResearch() {
     /* =========================
         AETHER ULTRAVIOLET SETUP
     ========================= */
+    async function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function registerUltraviolet() {
+        if (typeof registerSW !== "function") {
+            throw new Error("Ultraviolet service worker helper did not load.");
+        }
+
+        await registerSW();
+        await navigator.serviceWorker.ready;
+    }
+
+    async function ensureTransport() {
+        if (!window.BareMux || !window.__uv$config) {
+            throw new Error("Ultraviolet runtime did not load.");
+        }
+
+        const wispUrl =
+            (location.protocol === "https:" ? "wss" : "ws") +
+            "://" +
+            location.host +
+            "/wisp/";
+
+        const transportPath = "/epoxy/index.mjs";
+        let currentTransport = null;
+
+        try {
+            currentTransport = await connection.getTransport();
+        } catch {
+            currentTransport = null;
+        }
+
+        if (currentTransport !== transportPath) {
+            await connection.setTransport(transportPath, [{ wisp: wispUrl }]);
+        }
+    }
+
+    async function prepareUltraviolet() {
+        let lastError = null;
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                await registerUltraviolet();
+                await ensureTransport();
+                return;
+            } catch (err) {
+                lastError = err;
+                await wait(350 * (attempt + 1));
+            }
+        }
+
+        throw lastError;
+    }
+
     async function loadAddress() {
 
         const tab = getActiveTab();
@@ -738,19 +796,7 @@ function initAetherResearch() {
         try {
             errorEl.textContent = "Loading...";
 
-            await registerSW();
-
-            const wispUrl =
-                (location.protocol === "https:" ? "wss" : "ws") +
-                "://" +
-                location.host +
-                "/wisp/";
-
-            if ((await connection.getTransport()) !== "/epoxy/index.mjs") {
-                await connection.setTransport("/epoxy/index.mjs", [
-                    { wisp: wispUrl },
-                ]);
-            }
+            await prepareUltraviolet();
 
             tab.iframeEl.src = __uv$config.prefix + __uv$config.encodeUrl(url);
             tab.hasLoadedUrl = true;
@@ -764,6 +810,12 @@ function initAetherResearch() {
                 domain.substring(0, 16);
 
             render();
+
+            tab.iframeEl.addEventListener("load", () => {
+                if (errorEl.textContent === "Loading...") {
+                    errorEl.textContent = "";
+                }
+            }, { once: true });
 
             setTimeout(() => {
                 if (errorEl.textContent === "Loading...") {
@@ -782,8 +834,10 @@ function initAetherResearch() {
         await loadAddress();
     });
 
-    const goto = new URL(window.location.href).searchParams.get("goto");
+    const params = new URL(window.location.href).searchParams;
+    const goto = params.get("goto") || sessionStorage.getItem(toolTargetKey);
     if (goto) {
+        sessionStorage.removeItem(toolTargetKey);
         address.value = goto;
         window.history.replaceState(null, "", window.location.pathname);
         loadAddress();

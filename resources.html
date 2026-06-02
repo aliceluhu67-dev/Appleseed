@@ -466,9 +466,12 @@
     </div>
 
     <script>
+        const toolTargetKey = "aether-tool-target";
+
         document.querySelectorAll(".tool-tab").forEach((button) => {
             button.addEventListener("click", () => {
                 const url = button.dataset.url;
+                sessionStorage.setItem(toolTargetKey, url);
                 window.location.href = `research.html?goto=${encodeURIComponent(url)}`;
             });
         });
