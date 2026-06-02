@@ -652,6 +652,7 @@ function initAetherResearch() {
 
         landingUi.style.display = hasPage ? "none" : "flex";
         homeNav.style.display = hasPage ? "none" : "flex";
+        address.value = hasPage ? (tab.rawInput || tab.currentUrl) : "";
 
         for (const t of tabs) {
             const isActive = t.id === activeTabId;
@@ -671,6 +672,11 @@ function initAetherResearch() {
         activeTabId = id;
         errorEl.textContent = "";
         render();
+
+        const tab = getActiveTab();
+        if (!tab?.hasLoadedUrl) {
+            setTimeout(() => address.focus(), 0);
+        }
     }
 
     /* =========================
@@ -700,7 +706,8 @@ function initAetherResearch() {
             tabEl,
             iframeEl,
             hasLoadedUrl: false,
-            currentUrl: ""
+            currentUrl: "",
+            rawInput: ""
         };
 
         tabs.push(tab);
@@ -969,6 +976,7 @@ function initAetherResearch() {
             tab.iframeEl.src = proxiedUrl;
             tab.hasLoadedUrl = true;
             tab.currentUrl = url;
+            tab.rawInput = input;
 
             const domain = url
                 .replace(/^https?:\/\/(www\.)?/, "")
