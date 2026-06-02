@@ -802,18 +802,17 @@ function initAetherResearch() {
             6000,
             "Research service worker took too long to register."
         );
-        await withTimeout(
-            navigator.serviceWorker.ready,
-            6000,
-            "Research service worker did not become ready."
-        );
-
         const activeRegistration = await navigator.serviceWorker.getRegistration(registration.scope);
         if (!activeRegistration) {
             throw new Error("Research service worker was removed. Uncheck DevTools 'Unregister service workers'.");
         }
 
-        if (!activeRegistration.active && !registration?.active) {
+        if (
+            !activeRegistration.active &&
+            !activeRegistration.waiting &&
+            !registration?.active &&
+            !registration?.waiting
+        ) {
             throw new Error("Research service worker did not activate.");
         }
     }
