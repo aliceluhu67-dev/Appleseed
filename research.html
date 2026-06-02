@@ -808,7 +808,12 @@ function initAetherResearch() {
             "Research service worker did not become ready."
         );
 
-        if (!registration?.active && !navigator.serviceWorker.controller) {
+        const activeRegistration = await navigator.serviceWorker.getRegistration(registration.scope);
+        if (!activeRegistration) {
+            throw new Error("Research service worker was removed. Uncheck DevTools 'Unregister service workers'.");
+        }
+
+        if (!activeRegistration.active && !registration?.active) {
             throw new Error("Research service worker did not activate.");
         }
     }
@@ -944,11 +949,7 @@ function initAetherResearch() {
 
             errorEl.textContent = "Loading...";
             tab.iframeEl.removeAttribute("src");
-            await withTimeout(
-                prepareUltraviolet(),
-                15000,
-                "Research engine took too long to start."
-            );
+            await prepareUltraviolet();
 
             tab.iframeEl.onload = () => {
                 if (token !== loadToken) return;
