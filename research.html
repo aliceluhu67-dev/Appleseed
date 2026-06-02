@@ -834,19 +834,6 @@ function initAetherResearch() {
         }
     }
 
-    async function ensureUltravioletResponds() {
-        const probeUrl = __uv$config.prefix + __uv$config.encodeUrl("https://example.com/");
-
-        try {
-            const response = await fetch(probeUrl, { cache: "no-store" });
-            if (!response.ok) {
-                throw new Error(`Research engine returned ${response.status}.`);
-            }
-        } catch (err) {
-            throw new Error(err?.message || "Research engine did not answer.");
-        }
-    }
-
     async function prepareUltraviolet() {
         if (ultravioletReadyPromise) return ultravioletReadyPromise;
 
@@ -866,7 +853,6 @@ function initAetherResearch() {
             try {
                 await registerUltraviolet();
                 await ensureTransport();
-                await ensureUltravioletResponds();
                 return;
             } catch (err) {
                 lastError = err;
@@ -891,8 +877,12 @@ function initAetherResearch() {
 
         try {
             errorEl.textContent = "Loading...";
-
-            await prepareUltraviolet();
+            await Promise.race([
+                prepareUltraviolet(),
+                wait(8000).then(() => {
+                    throw new Error("Research engine took too long to start.");
+                })
+            ]);
 
             tab.iframeEl.onload = () => {
                 if (errorEl.textContent === "Loading...") {
@@ -925,6 +915,8 @@ function initAetherResearch() {
             }, 2500);
 
         } catch (err) {
+            tab.hasLoadedUrl = false;
+            render();
             errorEl.textContent = "Error: " + err.message;
         }
     }
