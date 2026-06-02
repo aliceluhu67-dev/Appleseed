@@ -746,6 +746,15 @@ function initAetherResearch() {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    async function withTimeout(promise, ms, message) {
+        let timeoutId;
+        const timeout = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error(message)), ms);
+        });
+
+        return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+    }
+
     async function removeLegacyServiceWorkers() {
         if (legacyWorkersChecked) return;
         legacyWorkersChecked = true;
@@ -783,9 +792,21 @@ function initAetherResearch() {
             throw new Error("Ultraviolet service worker helper did not load.");
         }
 
-        await removeLegacyServiceWorkers();
-        const registration = await registerSW();
-        await navigator.serviceWorker.ready;
+        await withTimeout(
+            removeLegacyServiceWorkers(),
+            2500,
+            "Old research workers took too long to clear."
+        );
+        const registration = await withTimeout(
+            registerSW(),
+            6000,
+            "Research service worker took too long to register."
+        );
+        await withTimeout(
+            navigator.serviceWorker.ready,
+            6000,
+            "Research service worker did not become ready."
+        );
 
         if (!registration?.active && !navigator.serviceWorker.controller) {
             throw new Error("Research service worker did not activate.");
@@ -806,7 +827,7 @@ function initAetherResearch() {
             const timeout = setTimeout(() => {
                 socket.close();
                 reject(new Error("Research relay did not respond."));
-            }, 900);
+            }, 2500);
 
             socket.addEventListener("open", () => {
                 clearTimeout(timeout);
@@ -828,7 +849,11 @@ function initAetherResearch() {
             throw new Error("Ultraviolet runtime did not load.");
         }
 
-        await probeWisp();
+        await withTimeout(
+            probeWisp(),
+            3500,
+            "Research relay took too long to connect."
+        );
 
         const wispUrl =
             (location.protocol === "https:" ? "wss" : "ws") +
@@ -840,16 +865,28 @@ function initAetherResearch() {
         let currentTransport = null;
 
         try {
-            currentTransport = await connection.getTransport();
+            currentTransport = await withTimeout(
+                connection.getTransport(),
+                2500,
+                "Research transport check took too long."
+            );
         } catch {
             currentTransport = null;
         }
 
         if (currentTransport !== transportPath) {
-            await connection.setTransport(transportPath, [{ wisp: wispUrl }]);
+            await withTimeout(
+                connection.setTransport(transportPath, [{ wisp: wispUrl }]),
+                7000,
+                "Research transport took too long to start."
+            );
         }
 
-        const selectedTransport = await connection.getTransport().catch(() => null);
+        const selectedTransport = await withTimeout(
+            connection.getTransport().catch(() => null),
+            2500,
+            "Research transport verification took too long."
+        );
         if (selectedTransport !== transportPath) {
             throw new Error("Research transport did not save.");
         }
@@ -889,8 +926,6 @@ function initAetherResearch() {
         throw lastError;
     }
 
-    prepareUltraviolet().catch(() => {});
-
     async function loadAddress() {
 
         const tab = getActiveTab();
@@ -909,12 +944,11 @@ function initAetherResearch() {
 
             errorEl.textContent = "Loading...";
             tab.iframeEl.removeAttribute("src");
-            await Promise.race([
+            await withTimeout(
                 prepareUltraviolet(),
-                wait(8000).then(() => {
-                    throw new Error("Research engine took too long to start.");
-                })
-            ]);
+                15000,
+                "Research engine took too long to start."
+            );
 
             tab.iframeEl.onload = () => {
                 if (token !== loadToken) return;
@@ -947,6 +981,8 @@ function initAetherResearch() {
 
         } catch (err) {
             clearTimeout(loadTimer);
+            ultravioletReadyPromise = null;
+            wispProbePromise = null;
             tab.hasLoadedUrl = false;
             render();
             errorEl.textContent = "Error: " + err.message;
