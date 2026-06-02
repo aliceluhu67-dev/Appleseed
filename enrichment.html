@@ -554,6 +554,22 @@
 
         let allGames = [];
         let imageUrls = {};
+        let usingFallbackGames = false;
+
+        const fallbackGames = [
+            { id: "play-2048", name: "2048", category: "Puzzle", url: "https://play2048.co/" },
+            { id: "hextris", name: "Hextris", category: "Arcade", url: "https://hextris.io/" },
+            { id: "sandspiel", name: "Sandspiel", category: "Creative", url: "https://sandspiel.club/" },
+            { id: "little-alchemy-2", name: "Little Alchemy 2", category: "Puzzle", url: "https://littlealchemy2.com/" },
+            { id: "slow-roads", name: "Slow Roads", category: "Driving", url: "https://slowroads.io/" },
+            { id: "classic-minecraft", name: "Classic Minecraft", category: "Creative", url: "https://classic.minecraft.net/" },
+            { id: "lichess", name: "Lichess", category: "Strategy", url: "https://lichess.org/" },
+            { id: "chess", name: "Chess", category: "Strategy", url: "https://www.chess.com/play/computer" },
+            { id: "agar", name: "Agar.io", category: "Arcade", url: "https://agar.io/" },
+            { id: "paper-io", name: "Paper.io", category: "Arcade", url: "https://paper-io.com/" },
+            { id: "tetris", name: "Tetris", category: "Puzzle", url: "https://tetris.com/play-tetris" },
+            { id: "krunker", name: "Krunker", category: "Action", url: "https://krunker.io/" },
+        ];
 
         function setStatus(message) {
             statusEl.textContent = message;
@@ -585,8 +601,32 @@
             return result?.categories || result?.data || [];
         }
 
+        function getFallbackImage(game) {
+            const label = game.name
+                .slice(0, 18)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;");
+            const svg = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+                    <rect width="300" height="300" fill="black"/>
+                    <circle cx="58" cy="64" r="28" fill="#00b4d8" opacity=".8"/>
+                    <circle cx="238" cy="216" r="36" fill="#7209b7" opacity=".75"/>
+                    <circle cx="212" cy="72" r="18" fill="#00f5d4" opacity=".8"/>
+                    <text x="150" y="154" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="Courier New, monospace" font-size="30" font-weight="700">${label}</text>
+                </svg>
+            `;
+
+            return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+        }
+
         async function loadImages(games) {
             await Promise.all(games.map(async (game) => {
+                if (game.url && !game.image_token) {
+                    imageUrls[game.id] = getFallbackImage(game);
+                    return;
+                }
+
                 if (!game.image_token || imageUrls[game.id]) return;
                 try {
                     imageUrls[game.id] = await Lumin.getImageUrl(game.image_token);
@@ -607,6 +647,26 @@
             });
         }
 
+        function playGame(game) {
+            if (game.url) {
+                window.location.href = `research.html?goto=${encodeURIComponent(game.url)}`;
+                return;
+            }
+
+            Lumin.loadGame(game.id).catch(async () => {
+                try {
+                    const result = await Lumin.getGameUrl(game.id);
+                    const url = result?.url || result;
+                    if (url) {
+                        window.location.href = `research.html?goto=${encodeURIComponent(url)}`;
+                    }
+                } catch (err) {
+                    console.error("Game launch failed:", err);
+                    setStatus("Could not open game.");
+                }
+            });
+        }
+
         function renderGames(games) {
             grid.innerHTML = "";
 
@@ -621,7 +681,7 @@
                 const card = document.createElement("button");
                 card.className = "game-card";
                 card.type = "button";
-                card.onclick = () => Lumin.loadGame(game.id);
+                card.onclick = () => playGame(game);
 
                 const image = document.createElement("img");
                 image.alt = game.name;
@@ -643,6 +703,10 @@
 
         async function initActivities() {
             try {
+                if (!window.Lumin) {
+                    throw new Error("Lumin SDK did not load.");
+                }
+
                 await Lumin.init({ headless: true });
 
                 const [gamesResult, categoriesResult] = await Promise.all([
@@ -651,6 +715,10 @@
                 ]);
 
                 allGames = normalizeGames(gamesResult);
+                if (!allGames.length) {
+                    throw new Error("Lumin returned an empty catalog.");
+                }
+
                 const categories = normalizeCategories(categoriesResult);
 
                 for (const category of categories) {
@@ -663,7 +731,19 @@
                 await refreshGames();
             } catch (err) {
                 console.error("LuminSDK error:", err);
-                setStatus("Could not load games.");
+                usingFallbackGames = true;
+                allGames = fallbackGames;
+
+                const categories = [...new Set(fallbackGames.map((game) => game.category))];
+                categoryFilter.innerHTML = '<option value="">All</option>';
+                for (const category of categories) {
+                    const option = document.createElement("option");
+                    option.value = category;
+                    option.textContent = category;
+                    categoryFilter.appendChild(option);
+                }
+
+                await refreshGames();
             }
         }
 
@@ -671,14 +751,31 @@
         categoryFilter.addEventListener("change", refreshGames);
         randomButton.addEventListener("click", async () => {
             setStatus("Loading random games...");
-            const result = await Lumin.getRandomGames(20);
-            const games = normalizeGames(result);
-            await loadImages(games);
-            renderGames(games);
+
+            if (usingFallbackGames || !window.Lumin) {
+                const shuffled = [...allGames].sort(() => Math.random() - 0.5).slice(0, 20);
+                await loadImages(shuffled);
+                renderGames(shuffled);
+                return;
+            }
+
+            try {
+                const result = await Lumin.getRandomGames(20);
+                const games = normalizeGames(result);
+                await loadImages(games);
+                renderGames(games);
+            } catch (err) {
+                console.error("Random games failed:", err);
+                usingFallbackGames = true;
+                allGames = fallbackGames;
+                const shuffled = [...allGames].sort(() => Math.random() - 0.5).slice(0, 20);
+                await loadImages(shuffled);
+                renderGames(shuffled);
+            }
         });
 
         window.addEventListener("beforeunload", () => {
-            Lumin.destroy?.();
+            window.Lumin?.destroy?.();
         });
 
         initActivities();
