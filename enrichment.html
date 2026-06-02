@@ -554,6 +554,8 @@
         let imageUrls = {};
         let usingFallbackGames = false;
         let imageObserver = null;
+        let luminTotalPages = 1;
+        const luminPageLimit = 100;
 
         const fallbackGames = [
             { id: "play-2048", name: "2048", category: "Puzzle", url: "https://play2048.co/" },
@@ -609,6 +611,15 @@
             return result?.games || [];
         }
 
+        function withTimeout(promise, timeout, message) {
+            let timeoutId;
+            const timeoutPromise = new Promise((_, reject) => {
+                timeoutId = setTimeout(() => reject(new Error(message)), timeout);
+            });
+
+            return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
+        }
+
         async function loadLuminSdk() {
             if (window.Lumin) return;
 
@@ -622,26 +633,45 @@
             });
         }
 
-        async function getAllGames() {
-            const limit = 100;
-            const firstPage = await Lumin.getGames({ page: 1, limit });
-            const games = normalizeGames(firstPage);
-            const total = Number(firstPage?.total || games.length);
-            const pages = Number(firstPage?.pages || Math.ceil(total / limit) || 1);
+        async function getGamesPage(page) {
+            const result = await Lumin.getGames({ page, limit: luminPageLimit });
+            const games = normalizeGames(result);
+            const total = Number(result?.total || games.length);
+            const pages = Number(result?.pages || Math.ceil(total / luminPageLimit) || 1);
+            return { games, pages };
+        }
 
-            if (pages <= 1) return games;
+        function updateCategories(categories) {
+            categoryFilter.innerHTML = '<option value="">All</option>';
+            for (const category of categories) {
+                const option = document.createElement("option");
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            }
+        }
 
-            const rest = [];
-            for (let page = 2; page <= pages; page += 4) {
+        function categoriesFromGames(games) {
+            return [...new Set(games.map((game) => game.category).filter(Boolean))].sort();
+        }
+
+        async function loadRemainingLuminPages(startPage) {
+            for (let page = startPage; page <= luminTotalPages; page += 2) {
                 const batch = await Promise.all(
-                    Array.from({ length: Math.min(4, pages - page + 1) }, (_, index) =>
-                        Lumin.getGames({ page: page + index, limit })
+                    Array.from({ length: Math.min(2, luminTotalPages - page + 1) }, (_, index) =>
+                        getGamesPage(page + index).catch(() => ({ games: [] }))
                     )
                 );
-                rest.push(...batch);
-            }
 
-            return games.concat(rest.flatMap(normalizeGames));
+                const nextGames = batch.flatMap((result) => result.games);
+                if (!nextGames.length) continue;
+
+                const seen = new Set(allGames.map((game) => game.id));
+                allGames = allGames.concat(nextGames.filter((game) => !seen.has(game.id)));
+                updateCategories(categoriesFromGames(allGames));
+                refreshGames();
+                await new Promise((resolve) => setTimeout(resolve, 40));
+            }
         }
 
         function normalizeCategories(result) {
@@ -816,47 +846,34 @@
         }
 
         async function initActivities() {
+            usingFallbackGames = true;
+            allGames = fallbackGames;
+            updateCategories(categoriesFromGames(fallbackGames));
+            refreshGames();
+
             try {
                 setStatus("Loading Lumin games...");
-                await loadLuminSdk();
-                await Lumin.init({ headless: true });
-                allGames = await getAllGames();
+                await withTimeout(loadLuminSdk(), 5000, "Lumin SDK took too long to load.");
+                await withTimeout(Lumin.init({ headless: true }), 6000, "Lumin took too long to start.");
+                const firstPage = await withTimeout(getGamesPage(1), 7000, "Lumin games took too long to load.");
+                allGames = firstPage.games;
                 if (!allGames.length) throw new Error("Lumin returned no games.");
                 usingFallbackGames = false;
+                luminTotalPages = firstPage.pages;
 
                 let categories = normalizeCategories(await Lumin.getCategories().catch(() => []));
                 if (!categories.length) {
-                    categories = [...new Set(allGames.map((game) => game.category).filter(Boolean))].sort();
+                    categories = categoriesFromGames(allGames);
                 }
 
-                categoryFilter.innerHTML = '<option value="">All</option>';
-                for (const category of categories) {
-                    const option = document.createElement("option");
-                    option.value = category;
-                    option.textContent = category;
-                    categoryFilter.appendChild(option);
-                }
-
-                await refreshGames();
+                updateCategories(categories);
+                refreshGames();
+                loadRemainingLuminPages(2).catch((err) => console.error("More Lumin pages failed:", err));
                 return;
             } catch (err) {
                 console.error("LuminSDK error:", err);
-                setStatus("Could not load Lumin. Showing backup games.");
+                setStatus(`${fallbackGames.length} games`);
             }
-
-            usingFallbackGames = true;
-            allGames = fallbackGames;
-
-            const categories = [...new Set(fallbackGames.map((game) => game.category))].sort();
-            categoryFilter.innerHTML = '<option value="">All</option>';
-            for (const category of categories) {
-                const option = document.createElement("option");
-                option.value = category;
-                option.textContent = category;
-                categoryFilter.appendChild(option);
-            }
-
-            await refreshGames();
         }
 
         searchInput.addEventListener("input", refreshGames);
