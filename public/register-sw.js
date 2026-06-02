@@ -45,4 +45,5 @@ async function registerSW() {
 	}
 
 	await navigator.serviceWorker.ready;
+	return registration;
 }

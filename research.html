@@ -609,6 +609,7 @@ function initAetherResearch() {
     let legacyWorkersChecked = false;
     let wispProbePromise = null;
     let ultravioletReadyPromise = null;
+    let loadToken = 0;
 
     /* =========================
         FORMAT URL
@@ -625,6 +626,17 @@ function initAetherResearch() {
 
         return "https://www.google.com/search?q=" +
             encodeURIComponent(url);
+    }
+
+    function assertValidUrl(url) {
+        try {
+            const parsed = new URL(url);
+            if (!["http:", "https:"].includes(parsed.protocol)) {
+                throw new Error("Only http and https addresses can be loaded.");
+            }
+        } catch {
+            throw new Error("That address could not be turned into a valid website.");
+        }
     }
 
     /* =========================
@@ -772,8 +784,12 @@ function initAetherResearch() {
         }
 
         await removeLegacyServiceWorkers();
-        await registerSW();
+        const registration = await registerSW();
         await navigator.serviceWorker.ready;
+
+        if (!registration?.active && !navigator.serviceWorker.controller) {
+            throw new Error("Research service worker did not activate.");
+        }
     }
 
     async function probeWisp() {
@@ -832,6 +848,16 @@ function initAetherResearch() {
         if (currentTransport !== transportPath) {
             await connection.setTransport(transportPath, [{ wisp: wispUrl }]);
         }
+
+        const selectedTransport = await connection.getTransport().catch(() => null);
+        if (selectedTransport !== transportPath) {
+            throw new Error("Research transport did not save.");
+        }
+    }
+
+    function setLoadingError(token, message) {
+        if (token !== loadToken) return;
+        errorEl.textContent = message;
     }
 
     async function prepareUltraviolet() {
@@ -874,9 +900,15 @@ function initAetherResearch() {
         if (!input) return;
 
         const url = formatUrl(input);
+        const token = ++loadToken;
+        let loadTimer = null;
 
         try {
+            assertValidUrl(url);
+            const proxiedUrl = __uv$config.prefix + __uv$config.encodeUrl(url);
+
             errorEl.textContent = "Loading...";
+            tab.iframeEl.removeAttribute("src");
             await Promise.race([
                 prepareUltraviolet(),
                 wait(8000).then(() => {
@@ -885,17 +917,22 @@ function initAetherResearch() {
             ]);
 
             tab.iframeEl.onload = () => {
+                if (token !== loadToken) return;
+                clearTimeout(loadTimer);
                 if (errorEl.textContent === "Loading...") {
                     errorEl.textContent = "";
                 }
             };
             tab.iframeEl.onerror = () => {
-                if (errorEl.textContent === "Loading...") {
-                    errorEl.textContent = "Site blocked or failed to load.";
-                }
+                clearTimeout(loadTimer);
+                setLoadingError(token, "Site blocked or failed to load.");
             };
 
-            tab.iframeEl.src = __uv$config.prefix + __uv$config.encodeUrl(url);
+            loadTimer = setTimeout(() => {
+                setLoadingError(token, "Still loading. This site may be blocking the proxy or taking too long.");
+            }, 15000);
+
+            tab.iframeEl.src = proxiedUrl;
             tab.hasLoadedUrl = true;
             tab.currentUrl = url;
 
@@ -908,13 +945,8 @@ function initAetherResearch() {
 
             render();
 
-            setTimeout(() => {
-                if (errorEl.textContent === "Loading...") {
-                    errorEl.textContent = "";
-                }
-            }, 2500);
-
         } catch (err) {
+            clearTimeout(loadTimer);
             tab.hasLoadedUrl = false;
             render();
             errorEl.textContent = "Error: " + err.message;
