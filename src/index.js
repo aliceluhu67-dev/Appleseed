@@ -29,6 +29,10 @@ app.get("/", (_req, res) => {
 	res.sendFile(join(root, "studyhub.html"));
 });
 
+app.get("/healthz", (_req, res) => {
+	res.type("text/plain").send("ok");
+});
+
 app.get([...pages], (req, res) => {
 	res.sendFile(join(root, req.path.slice(1)));
 });

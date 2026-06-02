@@ -675,8 +675,7 @@ function initAetherResearch() {
         const iframeEl = document.createElement("iframe");
         iframeEl.className = "web-viewport";
         iframeEl.style.display = "none";
-        iframeEl.setAttribute("allow", "autoplay; fullscreen; pointer-lock; gamepad; microphone; camera; clipboard-read; clipboard-write");
-        iframeEl.setAttribute("allowfullscreen", "");
+        iframeEl.setAttribute("allow", "autoplay; fullscreen; gamepad; microphone; camera; clipboard-read; clipboard-write");
 
         viewportsContainer.appendChild(iframeEl);
         tabBar.insertBefore(tabEl, newTabBtn);
@@ -732,19 +731,75 @@ function initAetherResearch() {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    async function removeLegacyServiceWorkers() {
+        if (!navigator.serviceWorker?.getRegistrations) return;
+
+        const cleanupKey = "aether-uv-sw-cleaned";
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        let removedLegacyWorker = false;
+
+        for (const registration of registrations) {
+            const worker =
+                registration.active ||
+                registration.waiting ||
+                registration.installing;
+            const scriptUrl = worker?.scriptURL || "";
+
+            if (scriptUrl && !scriptUrl.endsWith("/uv/sw.js")) {
+                removedLegacyWorker = await registration.unregister() || removedLegacyWorker;
+            }
+        }
+
+        if (removedLegacyWorker && !sessionStorage.getItem(cleanupKey)) {
+            sessionStorage.setItem(cleanupKey, "true");
+            window.location.reload();
+            throw new Error("Reloading research engine.");
+        }
+    }
+
     async function registerUltraviolet() {
         if (typeof registerSW !== "function") {
             throw new Error("Ultraviolet service worker helper did not load.");
         }
 
+        await removeLegacyServiceWorkers();
         await registerSW();
         await navigator.serviceWorker.ready;
+    }
+
+    async function probeWisp() {
+        const wispUrl =
+            (location.protocol === "https:" ? "wss" : "ws") +
+            "://" +
+            location.host +
+            "/wisp/";
+
+        await new Promise((resolve, reject) => {
+            const socket = new WebSocket(wispUrl);
+            const timeout = setTimeout(() => {
+                socket.close();
+                reject(new Error("Research relay did not respond."));
+            }, 2500);
+
+            socket.addEventListener("open", () => {
+                clearTimeout(timeout);
+                socket.close();
+                resolve();
+            }, { once: true });
+
+            socket.addEventListener("error", () => {
+                clearTimeout(timeout);
+                reject(new Error("Research relay failed to connect."));
+            }, { once: true });
+        });
     }
 
     async function ensureTransport() {
         if (!window.BareMux || !window.__uv$config) {
             throw new Error("Ultraviolet runtime did not load.");
         }
+
+        await probeWisp();
 
         const wispUrl =
             (location.protocol === "https:" ? "wss" : "ws") +
@@ -798,6 +853,17 @@ function initAetherResearch() {
 
             await prepareUltraviolet();
 
+            tab.iframeEl.onload = () => {
+                if (errorEl.textContent === "Loading...") {
+                    errorEl.textContent = "";
+                }
+            };
+            tab.iframeEl.onerror = () => {
+                if (errorEl.textContent === "Loading...") {
+                    errorEl.textContent = "Site blocked or failed to load.";
+                }
+            };
+
             tab.iframeEl.src = __uv$config.prefix + __uv$config.encodeUrl(url);
             tab.hasLoadedUrl = true;
             tab.currentUrl = url;
@@ -811,18 +877,11 @@ function initAetherResearch() {
 
             render();
 
-            tab.iframeEl.addEventListener("load", () => {
+            setTimeout(() => {
                 if (errorEl.textContent === "Loading...") {
                     errorEl.textContent = "";
                 }
-            }, { once: true });
-
-            setTimeout(() => {
-                if (errorEl.textContent === "Loading...") {
-                    errorEl.textContent =
-                        "Site blocked or failed to load.";
-                }
-            }, 8000);
+            }, 2500);
 
         } catch (err) {
             errorEl.textContent = "Error: " + err.message;
