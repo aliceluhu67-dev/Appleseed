@@ -606,6 +606,9 @@ function initAetherResearch() {
 
     let tabs = [];
     let activeTabId = null;
+    let legacyWorkersChecked = false;
+    let wispProbePromise = null;
+    let ultravioletReadyPromise = null;
 
     /* =========================
         FORMAT URL
@@ -732,6 +735,8 @@ function initAetherResearch() {
     }
 
     async function removeLegacyServiceWorkers() {
+        if (legacyWorkersChecked) return;
+        legacyWorkersChecked = true;
         if (!navigator.serviceWorker?.getRegistrations) return;
 
         const cleanupKey = "aether-uv-sw-cleaned";
@@ -768,18 +773,20 @@ function initAetherResearch() {
     }
 
     async function probeWisp() {
+        if (wispProbePromise) return wispProbePromise;
+
         const wispUrl =
             (location.protocol === "https:" ? "wss" : "ws") +
             "://" +
             location.host +
             "/wisp/";
 
-        await new Promise((resolve, reject) => {
+        wispProbePromise = new Promise((resolve, reject) => {
             const socket = new WebSocket(wispUrl);
             const timeout = setTimeout(() => {
                 socket.close();
                 reject(new Error("Research relay did not respond."));
-            }, 2500);
+            }, 900);
 
             socket.addEventListener("open", () => {
                 clearTimeout(timeout);
@@ -792,6 +799,8 @@ function initAetherResearch() {
                 reject(new Error("Research relay failed to connect."));
             }, { once: true });
         });
+
+        return wispProbePromise;
     }
 
     async function ensureTransport() {
@@ -822,6 +831,18 @@ function initAetherResearch() {
     }
 
     async function prepareUltraviolet() {
+        if (ultravioletReadyPromise) return ultravioletReadyPromise;
+
+        ultravioletReadyPromise = prepareUltravioletOnce().catch((err) => {
+            ultravioletReadyPromise = null;
+            wispProbePromise = null;
+            throw err;
+        });
+
+        return ultravioletReadyPromise;
+    }
+
+    async function prepareUltravioletOnce() {
         let lastError = null;
 
         for (let attempt = 0; attempt < 3; attempt++) {
@@ -837,6 +858,8 @@ function initAetherResearch() {
 
         throw lastError;
     }
+
+    prepareUltraviolet().catch(() => {});
 
     async function loadAddress() {
 
