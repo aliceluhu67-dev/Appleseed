@@ -1,37 +1,30 @@
 {
-	"name": "studyhub-root",
+	"name": "aether-study-hub",
 	"version": "1.0.0",
-	"description": "",
+	"description": "AETHER education portal powered by Ultraviolet",
 	"type": "module",
-	"keywords": [],
-	"author": "Mercury Workshop",
-	"license": "AGPL-3.0-only",
-	"packageManager": "pnpm@10.12.1",
-	"scripts": {
-		"dev": "node --no-warnings=ExperimentalWarning devserver.ts",
-		"preinstall": "npx only-allow pnpm"
+	"engines": {
+		"node": ">=24.0.0"
 	},
-	"pnpm": {
-		"overrides": {
-			"htmlparser2": "12.0.0"
-		},
-		"patchedDependencies": {
-			"htmlparser2@12.0.0": "patches/htmlparser2@12.0.0.patch"
-		}
+	"scripts": {
+		"start": "node src/index.js",
+		"dev": "node src/index.js"
+	},
+	"keywords": [
+		"education",
+		"research"
+	],
+	"packageManager": "pnpm@10.28.0",
+	"dependencies": {
+		"@mercuryworkshop/bare-mux": "^2.1.8",
+		"@mercuryworkshop/epoxy-transport": "2.1.28",
+		"@titaniumnetwork-dev/ultraviolet": "^3.2.10",
+		"express": "^5.2.1",
+		"wisp-server-node": "1.1.7",
+		"ws": "^8.19.0"
 	},
 	"devDependencies": {
-		"@mercuryworkshop/wisp-js": "catalog:",
-		"@rsdoctor/rspack-plugin": "^1.4.0",
-		"@rspack/cli": "^1.5.8",
-		"@rspack/core": "^1.5.8",
-		"chafa-wasm": "^0.3.1",
-		"chalk": "^5.6.2",
-		"eslint": "^10.2.0",
-		"ts-checker-rspack-plugin": "^1.1.6",
-		"tsc-alias": "^1.8.16",
-		"vite": "^7.3.0"
-	},
-	"dependencies": {
-		"prettier": "^3.6.2"
+		"eslint": "^9.39.2",
+		"prettier": "^3.8.1"
 	}
 }

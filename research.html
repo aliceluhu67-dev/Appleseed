@@ -6,8 +6,10 @@
 
     <title>AETHER</title>
 
-    <script src="/study-assets/research-engine.js"></script>
-    <script src="/controller/controller.api.js"></script>
+    <script src="/baremux/index.js"></script>
+    <script src="/uv/uv.bundle.js"></script>
+    <script src="/uv/uv.config.js"></script>
+    <script src="/register-sw.js"></script>
 
     <style>
         html,
@@ -599,6 +601,7 @@ function initAetherResearch() {
     const newTabBtn = document.getElementById("new-tab-btn");
     const viewportsContainer = document.getElementById("viewports-container");
     const homeNav = document.getElementById("home-nav");
+    const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
 
     let tabs = [];
     let activeTabId = null;
@@ -679,7 +682,6 @@ function initAetherResearch() {
             id,
             tabEl,
             iframeEl,
-            framePromise: null,
             hasLoadedUrl: false,
             currentUrl: ""
         };
@@ -720,19 +722,8 @@ function initAetherResearch() {
     newTabBtn.addEventListener("click", createTab);
     createTab();
 
-    function getFrame(tab) {
-        tab.framePromise ??= import("/src/aether-research.ts").then(({ createAetherFrame }) => createAetherFrame(tab.iframeEl, (url) => {
-            const active = getActiveTab();
-            if (active?.id === tab.id) {
-                address.value = url;
-            }
-        }));
-
-        return tab.framePromise;
-    }
-
     /* =========================
-        AETHER RESEARCH ENGINE SETUP
+        AETHER ULTRAVIOLET SETUP
     ========================= */
     async function loadAddress() {
 
@@ -747,8 +738,21 @@ function initAetherResearch() {
         try {
             errorEl.textContent = "Loading...";
 
-            const frame = await getFrame(tab);
-            frame.go(url);
+            await registerSW();
+
+            const wispUrl =
+                (location.protocol === "https:" ? "wss" : "ws") +
+                "://" +
+                location.host +
+                "/wisp/";
+
+            if ((await connection.getTransport()) !== "/epoxy/index.mjs") {
+                await connection.setTransport("/epoxy/index.mjs", [
+                    { wisp: wispUrl },
+                ]);
+            }
+
+            tab.iframeEl.src = __uv$config.prefix + __uv$config.encodeUrl(url);
             tab.hasLoadedUrl = true;
             tab.currentUrl = url;
 

@@ -1,13 +1,7 @@
-<h1 align="center">AETHER Study Hub</h1>
-
-<div align="center">
-  <img src="assets/studyhub.png" height="200" />
-</div>
-
----
+# AETHER Study Hub
 
 AETHER Study Hub is an education-themed web portal with study resources,
-research tools, enrichment activities, and a classroom-style navigation flow.
+enrichment activities, and a research browser powered by Ultraviolet.
 
 ## Pages
 
@@ -24,20 +18,26 @@ Install dependencies:
 pnpm install
 ```
 
-Start the local server:
+Start the server:
 
 ```sh
-pnpm dev
+pnpm start
 ```
 
-The study dashboard runs at:
+Open:
 
 ```text
-http://localhost:4141/studyhub.html
+http://localhost:8080/studyhub.html
 ```
 
-## Hosting
+## Render
 
-This project needs a Node web service for the full research browser backend.
-Static hosting can show the HTML pages, but the full browser experience needs
-the server started with `pnpm dev`.
+Use these commands:
+
+```sh
+pnpm install
+```
+
+```sh
+pnpm start
+```
