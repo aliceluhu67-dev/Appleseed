@@ -543,8 +543,6 @@
         <section class="games-grid" id="games"></section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/gh/luminsdk/script@latest/lumin.min.js"></script>
-
     <script>
         const grid = document.getElementById("games");
         const statusEl = document.getElementById("status");
@@ -558,17 +556,47 @@
 
         const fallbackGames = [
             { id: "play-2048", name: "2048", category: "Puzzle", url: "https://play2048.co/" },
-            { id: "hextris", name: "Hextris", category: "Arcade", url: "https://hextris.io/" },
-            { id: "sandspiel", name: "Sandspiel", category: "Creative", url: "https://sandspiel.club/" },
+            { id: "tetris", name: "Tetris", category: "Puzzle", url: "https://tetris.com/play-tetris" },
             { id: "little-alchemy-2", name: "Little Alchemy 2", category: "Puzzle", url: "https://littlealchemy2.com/" },
-            { id: "slow-roads", name: "Slow Roads", category: "Driving", url: "https://slowroads.io/" },
-            { id: "classic-minecraft", name: "Classic Minecraft", category: "Creative", url: "https://classic.minecraft.net/" },
-            { id: "lichess", name: "Lichess", category: "Strategy", url: "https://lichess.org/" },
-            { id: "chess", name: "Chess", category: "Strategy", url: "https://www.chess.com/play/computer" },
+            { id: "sudoku", name: "Sudoku", category: "Puzzle", url: "https://sudoku.com/" },
+            { id: "wordle", name: "Wordle", category: "Puzzle", url: "https://www.nytimes.com/games/wordle/index.html" },
+            { id: "connections", name: "Connections", category: "Puzzle", url: "https://www.nytimes.com/games/connections" },
+            { id: "minesweeper", name: "Minesweeper", category: "Puzzle", url: "https://minesweeper.online/" },
+            { id: "cut-the-rope", name: "Cut The Rope", category: "Puzzle", url: "https://www.crazygames.com/game/cut-the-rope" },
+            { id: "hextris", name: "Hextris", category: "Arcade", url: "https://hextris.io/" },
             { id: "agar", name: "Agar.io", category: "Arcade", url: "https://agar.io/" },
             { id: "paper-io", name: "Paper.io", category: "Arcade", url: "https://paper-io.com/" },
-            { id: "tetris", name: "Tetris", category: "Puzzle", url: "https://tetris.com/play-tetris" },
+            { id: "slither", name: "Slither.io", category: "Arcade", url: "https://slither.io/" },
+            { id: "shell-shockers", name: "Shell Shockers", category: "Arcade", url: "https://shellshock.io/" },
+            { id: "crossy-road", name: "Crossy Road", category: "Arcade", url: "https://poki.com/en/g/crossy-road" },
+            { id: "temple-run", name: "Temple Run 2", category: "Arcade", url: "https://poki.com/en/g/temple-run-2" },
+            { id: "subway-surfers", name: "Subway Surfers", category: "Arcade", url: "https://poki.com/en/g/subway-surfers" },
             { id: "krunker", name: "Krunker", category: "Action", url: "https://krunker.io/" },
+            { id: "1v1-lol", name: "1v1.LOL", category: "Action", url: "https://1v1.lol/" },
+            { id: "zombs-royale", name: "Zombs Royale", category: "Action", url: "https://zombsroyale.io/" },
+            { id: "ev-io", name: "Ev.io", category: "Action", url: "https://ev.io/" },
+            { id: "venge", name: "Venge.io", category: "Action", url: "https://venge.io/" },
+            { id: "lolbeans", name: "Lolbeans", category: "Action", url: "https://lolbeans.io/" },
+            { id: "slow-roads", name: "Slow Roads", category: "Driving", url: "https://slowroads.io/" },
+            { id: "drift-boss", name: "Drift Boss", category: "Driving", url: "https://www.hoodamath.com/games/driftboss.html" },
+            { id: "moto-x3m", name: "Moto X3M", category: "Driving", url: "https://poki.com/en/g/moto-x3m" },
+            { id: "madalin-stunt", name: "Madalin Stunt Cars", category: "Driving", url: "https://www.crazygames.com/game/madalin-stunt-cars-2" },
+            { id: "basket-random", name: "Basket Random", category: "Sports", url: "https://www.twoplayergames.org/game/basket-random" },
+            { id: "soccer-random", name: "Soccer Random", category: "Sports", url: "https://www.twoplayergames.org/game/soccer-random" },
+            { id: "retro-bowl", name: "Retro Bowl", category: "Sports", url: "https://retrobowl.me/" },
+            { id: "basketball-stars", name: "Basketball Stars", category: "Sports", url: "https://poki.com/en/g/basketball-stars" },
+            { id: "lichess", name: "Lichess", category: "Strategy", url: "https://lichess.org/" },
+            { id: "chess", name: "Chess", category: "Strategy", url: "https://www.chess.com/play/computer" },
+            { id: "checkers", name: "Checkers", category: "Strategy", url: "https://cardgames.io/checkers/" },
+            { id: "bloons", name: "Bloons TD", category: "Strategy", url: "https://www.crazygames.com/game/bloons-tower-defense" },
+            { id: "sandspiel", name: "Sandspiel", category: "Creative", url: "https://sandspiel.club/" },
+            { id: "classic-minecraft", name: "Classic Minecraft", category: "Creative", url: "https://classic.minecraft.net/" },
+            { id: "townscaper", name: "Townscaper", category: "Creative", url: "https://oskarstalberg.com/Townscaper/" },
+            { id: "neal-fun", name: "Neal.fun", category: "Creative", url: "https://neal.fun/" },
+            { id: "quick-draw", name: "Quick Draw", category: "Creative", url: "https://quickdraw.withgoogle.com/" },
+            { id: "geoguessr", name: "GeoGuessr", category: "Trivia", url: "https://www.geoguessr.com/" },
+            { id: "seterra", name: "Seterra", category: "Trivia", url: "https://www.geoguessr.com/seterra/" },
+            { id: "freerice", name: "FreeRice", category: "Trivia", url: "https://freerice.com/" },
         ];
 
         function setStatus(message) {
@@ -607,13 +635,51 @@
                 .replaceAll("&", "&amp;")
                 .replaceAll("<", "&lt;")
                 .replaceAll(">", "&gt;");
+            const category = game.category
+                .toUpperCase()
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;");
+            const palette = {
+                Puzzle: ["#00f5d4", "#7209b7", "#00b4d8"],
+                Arcade: ["#ff006e", "#00b4d8", "#7209b7"],
+                Action: ["#f72585", "#ffbe0b", "#3a0ca3"],
+                Driving: ["#2ec4b6", "#00b4d8", "#111111"],
+                Sports: ["#80ed99", "#00b4d8", "#7209b7"],
+                Strategy: ["#4cc9f0", "#4361ee", "#111111"],
+                Creative: ["#00f5d4", "#2ec4b6", "#7209b7"],
+                Trivia: ["#fdd85d", "#00b4d8", "#7209b7"],
+            };
+            const colors = palette[game.category] || ["#00b4d8", "#7209b7", "#00f5d4"];
+            const initials = game.name
+                .split(/[\s.-]+/)
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((word) => word[0].toUpperCase())
+                .join("");
             const svg = `
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
-                    <rect width="300" height="300" fill="black"/>
-                    <circle cx="58" cy="64" r="28" fill="#00b4d8" opacity=".8"/>
-                    <circle cx="238" cy="216" r="36" fill="#7209b7" opacity=".75"/>
-                    <circle cx="212" cy="72" r="18" fill="#00f5d4" opacity=".8"/>
-                    <text x="150" y="154" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="Courier New, monospace" font-size="30" font-weight="700">${label}</text>
+                    <defs>
+                        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" stop-color="#050505"/>
+                            <stop offset="1" stop-color="#151515"/>
+                        </linearGradient>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="6" result="blur"/>
+                            <feMerge>
+                                <feMergeNode in="blur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <rect width="300" height="300" fill="url(#bg)"/>
+                    <rect x="18" y="18" width="264" height="264" rx="24" fill="none" stroke="white" stroke-width="8"/>
+                    <circle cx="76" cy="78" r="34" fill="${colors[0]}" opacity=".85" filter="url(#glow)"/>
+                    <circle cx="230" cy="224" r="42" fill="${colors[1]}" opacity=".82" filter="url(#glow)"/>
+                    <circle cx="222" cy="78" r="20" fill="${colors[2]}" opacity=".9" filter="url(#glow)"/>
+                    <text x="150" y="130" text-anchor="middle" fill="white" font-family="Courier New, monospace" font-size="62" font-weight="700" filter="url(#glow)">${initials}</text>
+                    <text x="150" y="190" text-anchor="middle" fill="white" font-family="Courier New, monospace" font-size="24" font-weight="700">${label}</text>
+                    <text x="150" y="226" text-anchor="middle" fill="${colors[0]}" font-family="Courier New, monospace" font-size="15" font-weight="700">${category}</text>
                 </svg>
             `;
 
@@ -702,49 +768,19 @@
         }
 
         async function initActivities() {
-            try {
-                if (!window.Lumin) {
-                    throw new Error("Lumin SDK did not load.");
-                }
+            usingFallbackGames = true;
+            allGames = fallbackGames;
 
-                await Lumin.init({ headless: true });
-
-                const [gamesResult, categoriesResult] = await Promise.all([
-                    getAllGames(),
-                    Lumin.getCategories().catch(() => []),
-                ]);
-
-                allGames = normalizeGames(gamesResult);
-                if (!allGames.length) {
-                    throw new Error("Lumin returned an empty catalog.");
-                }
-
-                const categories = normalizeCategories(categoriesResult);
-
-                for (const category of categories) {
-                    const option = document.createElement("option");
-                    option.value = category;
-                    option.textContent = category;
-                    categoryFilter.appendChild(option);
-                }
-
-                await refreshGames();
-            } catch (err) {
-                console.error("LuminSDK error:", err);
-                usingFallbackGames = true;
-                allGames = fallbackGames;
-
-                const categories = [...new Set(fallbackGames.map((game) => game.category))];
-                categoryFilter.innerHTML = '<option value="">All</option>';
-                for (const category of categories) {
-                    const option = document.createElement("option");
-                    option.value = category;
-                    option.textContent = category;
-                    categoryFilter.appendChild(option);
-                }
-
-                await refreshGames();
+            const categories = [...new Set(fallbackGames.map((game) => game.category))].sort();
+            categoryFilter.innerHTML = '<option value="">All</option>';
+            for (const category of categories) {
+                const option = document.createElement("option");
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
             }
+
+            await refreshGames();
         }
 
         searchInput.addEventListener("input", refreshGames);

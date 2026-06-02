@@ -33,6 +33,10 @@ app.get("/healthz", (_req, res) => {
 	res.type("text/plain").send("ok");
 });
 
+app.get("/favicon.ico", (_req, res) => {
+	res.status(204).end();
+});
+
 app.get([...pages], (req, res) => {
 	res.sendFile(join(root, req.path.slice(1)));
 });
