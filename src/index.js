@@ -16,6 +16,7 @@ const app = express();
 const pages = new Set([
 	"/studyhub.html",
 	"/research.html",
+	"/research-uv-test.html",
 	"/resources.html",
 	"/enrichment.html",
 ]);
