@@ -553,6 +553,7 @@
         let allGames = [];
         let imageUrls = {};
         let usingFallbackGames = false;
+        let imageObserver = null;
 
         const fallbackGames = [
             { id: "play-2048", name: "2048", category: "Puzzle", url: "https://play2048.co/" },
@@ -608,18 +609,37 @@
             return result?.games || [];
         }
 
+        async function loadLuminSdk() {
+            if (window.Lumin) return;
+
+            await new Promise((resolve, reject) => {
+                const script = document.createElement("script");
+                script.src = "https://cdn.jsdelivr.net/gh/luminsdk/script@latest/lumin.min.js";
+                script.async = true;
+                script.onload = resolve;
+                script.onerror = () => reject(new Error("Lumin SDK failed to load."));
+                document.head.appendChild(script);
+            });
+        }
+
         async function getAllGames() {
-            const firstPage = await Lumin.getGames({ page: 1, limit: 100 });
+            const limit = 100;
+            const firstPage = await Lumin.getGames({ page: 1, limit });
             const games = normalizeGames(firstPage);
-            const pages = Number(firstPage?.pages || 1);
+            const total = Number(firstPage?.total || games.length);
+            const pages = Number(firstPage?.pages || Math.ceil(total / limit) || 1);
 
             if (pages <= 1) return games;
 
-            const rest = await Promise.all(
-                Array.from({ length: pages - 1 }, (_, index) =>
-                    Lumin.getGames({ page: index + 2, limit: 100 })
-                )
-            );
+            const rest = [];
+            for (let page = 2; page <= pages; page += 4) {
+                const batch = await Promise.all(
+                    Array.from({ length: Math.min(4, pages - page + 1) }, (_, index) =>
+                        Lumin.getGames({ page: page + index, limit })
+                    )
+                );
+                rest.push(...batch);
+            }
 
             return games.concat(rest.flatMap(normalizeGames));
         }
@@ -635,7 +655,8 @@
                 .replaceAll("&", "&amp;")
                 .replaceAll("<", "&lt;")
                 .replaceAll(">", "&gt;");
-            const category = game.category
+            const categoryName = game.category || "Games";
+            const category = categoryName
                 .toUpperCase()
                 .replaceAll("&", "&amp;")
                 .replaceAll("<", "&lt;")
@@ -650,7 +671,7 @@
                 Creative: ["#00f5d4", "#2ec4b6", "#7209b7"],
                 Trivia: ["#fdd85d", "#00b4d8", "#7209b7"],
             };
-            const colors = palette[game.category] || ["#00b4d8", "#7209b7", "#00f5d4"];
+            const colors = palette[categoryName] || ["#00b4d8", "#7209b7", "#00f5d4"];
             const initials = game.name
                 .split(/[\s.-]+/)
                 .filter(Boolean)
@@ -693,13 +714,36 @@
                     return;
                 }
 
-                if (!game.image_token || imageUrls[game.id]) return;
+                if (!game.image_token || imageUrls[game.id] || !window.Lumin) return;
                 try {
                     imageUrls[game.id] = await Lumin.getImageUrl(game.image_token);
                 } catch {
-                    imageUrls[game.id] = "";
+                    imageUrls[game.id] = getFallbackImage(game);
                 }
             }));
+        }
+
+        function watchImage(image, game) {
+            if (!imageObserver) {
+                imageObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (!entry.isIntersecting) continue;
+
+                        const target = entry.target;
+                        imageObserver.unobserve(target);
+                        const gameId = target.dataset.gameId;
+                        const nextGame = allGames.find((item) => item.id === gameId);
+                        if (!nextGame) return;
+
+                        loadImages([nextGame]).then(() => {
+                            target.src = imageUrls[nextGame.id] || getFallbackImage(nextGame);
+                        });
+                    }
+                }, { root: grid, rootMargin: "260px" });
+            }
+
+            image.dataset.gameId = game.id;
+            imageObserver.observe(image);
         }
 
         function getVisibleGames() {
@@ -735,6 +779,8 @@
 
         function renderGames(games) {
             grid.innerHTML = "";
+            imageObserver?.disconnect();
+            imageObserver = null;
 
             if (!games.length) {
                 setStatus("No games found.");
@@ -751,7 +797,10 @@
 
                 const image = document.createElement("img");
                 image.alt = game.name;
-                image.src = imageUrls[game.id] || "";
+                image.src = imageUrls[game.id] || getFallbackImage(game);
+                if (!imageUrls[game.id] && game.image_token) {
+                    watchImage(image, game);
+                }
 
                 const title = document.createElement("span");
                 title.textContent = game.name;
@@ -763,11 +812,38 @@
 
         async function refreshGames() {
             const games = getVisibleGames();
-            await loadImages(games);
             renderGames(games);
         }
 
         async function initActivities() {
+            try {
+                setStatus("Loading Lumin games...");
+                await loadLuminSdk();
+                await Lumin.init({ headless: true });
+                allGames = await getAllGames();
+                if (!allGames.length) throw new Error("Lumin returned no games.");
+                usingFallbackGames = false;
+
+                let categories = normalizeCategories(await Lumin.getCategories().catch(() => []));
+                if (!categories.length) {
+                    categories = [...new Set(allGames.map((game) => game.category).filter(Boolean))].sort();
+                }
+
+                categoryFilter.innerHTML = '<option value="">All</option>';
+                for (const category of categories) {
+                    const option = document.createElement("option");
+                    option.value = category;
+                    option.textContent = category;
+                    categoryFilter.appendChild(option);
+                }
+
+                await refreshGames();
+                return;
+            } catch (err) {
+                console.error("LuminSDK error:", err);
+                setStatus("Could not load Lumin. Showing backup games.");
+            }
+
             usingFallbackGames = true;
             allGames = fallbackGames;
 
