@@ -555,6 +555,7 @@
         let usingFallbackGames = false;
         let imageObserver = null;
         let luminTotalPages = 1;
+        let luminTotalGames = 0;
         const luminPageLimit = 100;
 
         const fallbackGames = [
@@ -638,7 +639,7 @@
             const games = normalizeGames(result);
             const total = Number(result?.total || games.length);
             const pages = Number(result?.pages || Math.ceil(total / luminPageLimit) || 1);
-            return { games, pages };
+            return { games, pages, total };
         }
 
         function updateCategories(categories) {
@@ -748,7 +749,7 @@
                 try {
                     imageUrls[game.id] = await Lumin.getImageUrl(game.image_token);
                 } catch {
-                    imageUrls[game.id] = getFallbackImage(game);
+                    imageUrls[game.id] = "";
                 }
             }));
         }
@@ -766,7 +767,9 @@
                         if (!nextGame) return;
 
                         loadImages([nextGame]).then(() => {
-                            target.src = imageUrls[nextGame.id] || getFallbackImage(nextGame);
+                            if (imageUrls[nextGame.id]) {
+                                target.src = imageUrls[nextGame.id];
+                            }
                         });
                     }
                 }, { root: grid, rootMargin: "260px" });
@@ -817,7 +820,7 @@
                 return;
             }
 
-            setStatus(`${games.length} games`);
+            setStatus(luminTotalGames > games.length ? `${games.length} of ${luminTotalGames} games` : `${games.length} games`);
 
             for (const game of games) {
                 const card = document.createElement("button");
@@ -827,8 +830,12 @@
 
                 const image = document.createElement("img");
                 image.alt = game.name;
-                image.src = imageUrls[game.id] || getFallbackImage(game);
-                if (!imageUrls[game.id] && game.image_token) {
+                if (imageUrls[game.id]) {
+                    image.src = imageUrls[game.id];
+                } else if (!game.image_token) {
+                    image.src = getFallbackImage(game);
+                }
+                if (game.image_token && !imageUrls[game.id]) {
                     watchImage(image, game);
                 }
 
@@ -846,20 +853,16 @@
         }
 
         async function initActivities() {
-            usingFallbackGames = true;
-            allGames = fallbackGames;
-            updateCategories(categoriesFromGames(fallbackGames));
-            refreshGames();
-
             try {
                 setStatus("Loading Lumin games...");
-                await withTimeout(loadLuminSdk(), 5000, "Lumin SDK took too long to load.");
-                await withTimeout(Lumin.init({ headless: true }), 6000, "Lumin took too long to start.");
-                const firstPage = await withTimeout(getGamesPage(1), 7000, "Lumin games took too long to load.");
+                await withTimeout(loadLuminSdk(), 15000, "Lumin SDK took too long to load.");
+                await withTimeout(Lumin.init({ headless: true }), 20000, "Lumin took too long to start.");
+                const firstPage = await withTimeout(getGamesPage(1), 20000, "Lumin games took too long to load.");
                 allGames = firstPage.games;
                 if (!allGames.length) throw new Error("Lumin returned no games.");
                 usingFallbackGames = false;
                 luminTotalPages = firstPage.pages;
+                luminTotalGames = firstPage.total;
 
                 let categories = normalizeCategories(await Lumin.getCategories().catch(() => []));
                 if (!categories.length) {
@@ -867,11 +870,17 @@
                 }
 
                 updateCategories(categories);
+                await loadImages(allGames.slice(0, 24));
                 refreshGames();
                 loadRemainingLuminPages(2).catch((err) => console.error("More Lumin pages failed:", err));
                 return;
             } catch (err) {
                 console.error("LuminSDK error:", err);
+                usingFallbackGames = true;
+                allGames = fallbackGames;
+                luminTotalGames = 0;
+                updateCategories(categoriesFromGames(fallbackGames));
+                refreshGames();
                 setStatus(`${fallbackGames.length} games`);
             }
         }
