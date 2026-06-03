@@ -876,12 +876,12 @@
                 return;
             } catch (err) {
                 console.error("LuminSDK error:", err);
-                usingFallbackGames = true;
-                allGames = fallbackGames;
+                usingFallbackGames = false;
+                allGames = [];
                 luminTotalGames = 0;
-                updateCategories(categoriesFromGames(fallbackGames));
-                refreshGames();
-                setStatus(`${fallbackGames.length} games`);
+                updateCategories([]);
+                grid.innerHTML = "";
+                setStatus("Lumin is unreachable right now. Its worker domain is not resolving.");
             }
         }
 
@@ -889,6 +889,11 @@
         categoryFilter.addEventListener("change", refreshGames);
         randomButton.addEventListener("click", async () => {
             setStatus("Loading random games...");
+
+            if (!allGames.length && !window.Lumin) {
+                setStatus("Lumin is unreachable right now. Its worker domain is not resolving.");
+                return;
+            }
 
             if (usingFallbackGames || !window.Lumin) {
                 const shuffled = [...allGames].sort(() => Math.random() - 0.5).slice(0, 20);
