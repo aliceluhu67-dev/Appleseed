@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Activities</title>
+    <script src="https://cdn.jsdelivr.net/gh/luminsdk/script@latest/lumin.min.js"></script>
 
     <style>
         html, body {
@@ -900,11 +901,7 @@
             try {
                 setStatus(cachedDirectory ? `${allGames.length} games` : "Loading Lumin games...");
                 await withTimeout(loadLuminSdk(), 15000, "Lumin SDK took too long to load.");
-                await withTimeout(
-                    retryLumin(() => Lumin.init({ headless: true })),
-                    30000,
-                    "Lumin took too long to start."
-                );
+                await withTimeout(Lumin.init({ headless: true }), 30000, "Lumin took too long to start.");
                 const firstPage = await withTimeout(getGamesPage(1), 30000, "Lumin games took too long to load.");
                 allGames = firstPage.games;
                 if (!allGames.length) throw new Error("Lumin returned no games.");
@@ -934,7 +931,7 @@
                 luminTotalGames = 0;
                 updateCategories([]);
                 grid.innerHTML = "";
-                setStatus("Lumin is unreachable right now. Its worker domain is not resolving.");
+                setStatus("Lumin games failed to load.");
             }
         }
 
@@ -944,7 +941,7 @@
             setStatus("Loading random games...");
 
             if (!allGames.length && !window.Lumin) {
-                setStatus("Lumin is unreachable right now. Its worker domain is not resolving.");
+                setStatus("Lumin games failed to load.");
                 return;
             }
 

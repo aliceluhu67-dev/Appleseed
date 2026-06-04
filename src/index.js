@@ -47,8 +47,20 @@ app.use((_req, res) => {
 });
 
 const server = createServer((req, res) => {
-	res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-	res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+	const url = req.url || "";
+	const needsProxyIsolation =
+		url.startsWith("/research") ||
+		url.startsWith("/uv/") ||
+		url.startsWith("/uv-test/") ||
+		url.startsWith("/baremux/") ||
+		url.startsWith("/epoxy/") ||
+		url.startsWith("/register-sw.js");
+
+	if (needsProxyIsolation) {
+		res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+		res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+	}
+
 	app(req, res);
 });
 
