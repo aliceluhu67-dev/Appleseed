@@ -19,6 +19,8 @@ const pages = new Set([
 	"/research-uv-test.html",
 	"/resources.html",
 	"/enrichment.html",
+	"/loading.html",
+	"/page-loader.js",
 ]);
 
 app.use(express.static(join(root, "public"), { index: false }));
