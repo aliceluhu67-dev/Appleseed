@@ -558,7 +558,7 @@
         let luminTotalPages = 1;
         let luminTotalGames = 0;
         const luminPageLimit = 200;
-        const luminDirectoryCacheKey = "aether:lumin-directory:v1";
+        const luminDirectoryCacheKey = "aether:lumin-directory:v2";
 
         const fallbackGames = [
             { id: "play-2048", name: "2048", category: "Puzzle", url: "https://play2048.co/" },
@@ -671,7 +671,7 @@
         }
 
         async function getGamesPage(page) {
-            const result = await retryLumin(() => Lumin.getGames({ page, limit: luminPageLimit }));
+            const result = await retryLumin(() => Lumin.getGames({ page, limit: luminPageLimit, q: "" }));
             const games = normalizeGames(result);
             const total = Number(result?.total || games.length);
             const pages = Number(result?.pages || Math.ceil(total / luminPageLimit) || 1);
@@ -692,24 +692,35 @@
             return [...new Set(games.map((game) => game.category).filter(Boolean))].sort();
         }
 
+        function mergeLuminGames(games) {
+            const seen = new Set(allGames.map((game) => game.id));
+            const freshGames = games.filter((game) => game?.id && !seen.has(game.id));
+            if (!freshGames.length) return false;
+
+            allGames = allGames.concat(freshGames);
+            return true;
+        }
+
         async function loadRemainingLuminPages(startPage) {
-            for (let page = startPage; page <= luminTotalPages; page += 2) {
+            for (let page = startPage; page <= luminTotalPages; page += 3) {
                 const batch = await Promise.all(
-                    Array.from({ length: Math.min(2, luminTotalPages - page + 1) }, (_, index) =>
+                    Array.from({ length: Math.min(3, luminTotalPages - page + 1) }, (_, index) =>
                         getGamesPage(page + index).catch(() => ({ games: [] }))
                     )
                 );
 
                 const nextGames = batch.flatMap((result) => result.games);
-                if (!nextGames.length) continue;
+                if (!nextGames.length || !mergeLuminGames(nextGames)) continue;
 
-                const seen = new Set(allGames.map((game) => game.id));
-                allGames = allGames.concat(nextGames.filter((game) => !seen.has(game.id)));
+                const fetchedCount = luminTotalGames ? Math.min(allGames.length, luminTotalGames) : allGames.length;
                 updateCategories(categoriesFromGames(allGames));
                 setCachedLuminDirectory(allGames, luminTotalGames);
+                setStatus(luminTotalGames ? `Loading Lumin games: ${fetchedCount} of ${luminTotalGames}` : `Loading Lumin games: ${allGames.length}`);
                 refreshGames();
                 await new Promise((resolve) => setTimeout(resolve, 40));
             }
+
+            setStatus(`${allGames.length} games`);
         }
 
         function normalizeCategories(result) {
@@ -775,6 +786,10 @@
             return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
         }
 
+        async function getLuminImageUrl(token) {
+            return retryLumin(() => Lumin.getImageUrl(token), 6);
+        }
+
         async function loadImages(games) {
             await Promise.all(games.map(async (game) => {
                 if (game.url && !game.image_token) {
@@ -784,7 +799,7 @@
 
                 if (!game.image_token || imageUrls[game.id] || !window.Lumin) return;
                 try {
-                    imageUrls[game.id] = await Lumin.getImageUrl(game.image_token);
+                    imageUrls[game.id] = await getLuminImageUrl(game.image_token);
                 } catch {
                     imageUrls[game.id] = "";
                 }
@@ -918,7 +933,10 @@
                 updateCategories(categories);
                 await loadImages(allGames.slice(0, 24));
                 refreshGames();
-                loadRemainingLuminPages(2).catch((err) => console.error("More Lumin pages failed:", err));
+                loadRemainingLuminPages(2).catch((err) => {
+                    console.error("More Lumin pages failed:", err);
+                    setStatus(`${allGames.length} games loaded. More pages failed.`);
+                });
                 return;
             } catch (err) {
                 console.error("LuminSDK error:", err);
